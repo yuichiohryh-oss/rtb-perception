@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, List, Sequence, Tuple
+from typing import List, Sequence, Tuple
 
 Bbox = Tuple[int, int, int, int]
 
@@ -32,15 +32,15 @@ def iou(b1: Bbox, b2: Bbox) -> float:
 
 
 def greedy_match(
-    a: Sequence[Bbox],
-    b: Sequence[Bbox],
+    track_bboxes: Sequence[Bbox],
+    det_bboxes: Sequence[Bbox],
     iou_thresh: float,
 ) -> List[Match]:
     matches: List[Match] = []
     candidates: List[Match] = []
 
-    for i, b1 in enumerate(a):
-        for j, b2 in enumerate(b):
+    for i, b1 in enumerate(track_bboxes):
+        for j, b2 in enumerate(det_bboxes):
             score = iou(b1, b2)
             if score >= iou_thresh:
                 candidates.append(Match(i, j, score))

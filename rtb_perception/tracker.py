@@ -16,6 +16,7 @@ class Track:
     missed_frames: int = 0
     last_center: Optional[Tuple[float, float]] = None
     dist_sum: float = 0.0
+    side: Optional[str] = None
     kind_guess: str = "unknown"
 
 
@@ -70,6 +71,7 @@ class UnitTracker:
             missed_frames=0,
             last_center=None,
             dist_sum=0.0,
+            side=None,
             kind_guess="unknown",
         )
         self._next_id += 1
@@ -99,6 +101,15 @@ class UnitTracker:
             )
         else:
             track.kind_guess = "unknown"
+
+    def _ensure_track_side(
+        self,
+        track: Track,
+        center: Tuple[float, float],
+        split_y: Optional[int],
+    ) -> None:
+        if track.side is None:
+            track.side = self._infer_side(center, split_y)
 
     def _refresh_kind_guess(self, track: Track) -> None:
         if track.age >= self.kind_window:
@@ -138,6 +149,7 @@ class UnitTracker:
             track.age += 1
             center = self._bbox_center(bbox)
             self._update_track_kind(track, center)
+            self._ensure_track_side(track, center, split_y)
             matched_tracks.add(track.track_id)
             matched_candidates.add(match.idx_b)
             events.append(
@@ -151,7 +163,7 @@ class UnitTracker:
                     age=track.age,
                     missed=track.missed_frames,
                     center=center,
-                    side=self._infer_side(center, split_y),
+                    side=track.side,
                     kind_guess=track.kind_guess,
                 )
             )
@@ -174,7 +186,7 @@ class UnitTracker:
                         age=track.age,
                         missed=track.missed_frames,
                         center=center,
-                        side=self._infer_side(center, split_y),
+                        side=track.side,
                         kind_guess=track.kind_guess,
                     )
                 )
@@ -204,6 +216,7 @@ class UnitTracker:
                 track = self._new_track(frame_index, bbox)
                 center = self._bbox_center(bbox)
                 self._update_track_kind(track, center)
+                self._ensure_track_side(track, center, split_y)
                 events.append(
                     Event(
                         event="spawn",
@@ -215,7 +228,7 @@ class UnitTracker:
                         age=track.age,
                         missed=track.missed_frames,
                         center=center,
-                        side=self._infer_side(center, split_y),
+                        side=track.side,
                         kind_guess=track.kind_guess,
                     )
                 )
@@ -237,6 +250,7 @@ class UnitTracker:
                 track = self._new_track(frame_index, bbox)
                 center = self._bbox_center(bbox)
                 self._update_track_kind(track, center)
+                self._ensure_track_side(track, center, split_y)
                 events.append(
                     Event(
                         event="spawn",
@@ -248,7 +262,7 @@ class UnitTracker:
                         age=track.age,
                         missed=track.missed_frames,
                         center=center,
-                        side=self._infer_side(center, split_y),
+                        side=track.side,
                         kind_guess=track.kind_guess,
                     )
                 )

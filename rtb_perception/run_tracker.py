@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import deque
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -22,6 +23,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--end", type=int, default=None, help="End frame index (exclusive)")
     parser.add_argument("--debug", action="store_true", help="Save debug images")
     parser.add_argument("--diff-threshold", type=int, default=25, help="Diff threshold")
+    parser.add_argument(
+        "--blur", type=int, default=0, help="Gaussian blur kernel size (0 disables)"
+    )
+    parser.add_argument(
+        "--diff-step",
+        type=int,
+        default=1,
+        help="Frame step for diff (1 compares to previous frame)",
+    )
     parser.add_argument("--kernel-size", type=int, default=3, help="Morphology kernel size")
     parser.add_argument("--min-area", type=int, default=100, help="Min bbox area")
     parser.add_argument("--roi-top", type=float, default=0.14, help="ROI top ratio")
@@ -36,8 +46,18 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def prepare_frame_pair(frame_buffer: deque, diff_step: int):
+    if diff_step < 1:
+        raise ValueError("diff_step must be >= 1")
+    if len(frame_buffer) <= diff_step:
+        return None
+    return frame_buffer[0], frame_buffer[-1]
+
+
 def run() -> int:
     args = parse_args()
+    if args.diff_step < 1:
+        raise ValueError("diff_step must be >= 1")
     video_path = Path(args.video)
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -60,7 +80,7 @@ def run() -> int:
     )
     events_path = out_dir / "events.jsonl"
 
-    prev_frame = None
+    frame_buffer = deque(maxlen=args.diff_step + 1)
     frame_index = args.start
 
     with events_path.open("w", encoding="utf-8") as handle:
@@ -71,17 +91,20 @@ def run() -> int:
             if not ok:
                 break
 
-            if prev_frame is None:
-                prev_frame = frame
+            frame_buffer.append(frame)
+            pair = prepare_frame_pair(frame_buffer, args.diff_step)
+            if pair is None:
                 frame_index += 1
                 continue
 
+            prev_frame, curr_frame = pair
             diff_bboxes = extract_diff_bboxes(
                 prev_frame,
-                frame,
+                curr_frame,
                 threshold=args.diff_threshold,
                 min_area=args.min_area,
                 kernel_size=args.kernel_size,
+                blur_ksize=args.blur,
                 roi_top=args.roi_top,
                 roi_bottom=args.roi_bottom,
                 roi_left=args.roi_left,
@@ -93,14 +116,14 @@ def run() -> int:
 
             if args.debug:
                 roi_rect = compute_roi_bounds(
-                    frame.shape,
+                    curr_frame.shape,
                     roi_top=args.roi_top,
                     roi_bottom=args.roi_bottom,
                     roi_left=args.roi_left,
                     roi_right=args.roi_right,
                 )
                 debug_img = draw_debug_frame(
-                    frame,
+                    curr_frame,
                     tracker.get_tracks(),
                     events,
                     tracker.get_candidates(),
@@ -110,7 +133,6 @@ def run() -> int:
                 debug_path = debug_dir / f"frame_{frame_index:06d}.jpg"
                 cv2.imwrite(str(debug_path), debug_img)
 
-            prev_frame = frame
             frame_index += 1
 
     cap.release()

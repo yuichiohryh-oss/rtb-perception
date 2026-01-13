@@ -34,12 +34,21 @@ def apply_roi_offset(bbox: Bbox, roi_x1: int, roi_y1: int) -> Bbox:
     return x1 + roi_x1, y1 + roi_y1, x2 + roi_x1, y2 + roi_y1
 
 
+def normalize_blur_ksize(blur_ksize: int) -> int:
+    if blur_ksize <= 0:
+        return 0
+    if blur_ksize % 2 == 0:
+        return blur_ksize + 1
+    return blur_ksize
+
+
 def extract_diff_bboxes(
     prev_frame: np.ndarray,
     curr_frame: np.ndarray,
     threshold: int = 25,
     min_area: int = 100,
     kernel_size: int = 3,
+    blur_ksize: int = 0,
     roi_top: float = 0.14,
     roi_bottom: float = 0.74,
     roi_left: float = 0.0,
@@ -57,9 +66,14 @@ def extract_diff_bboxes(
 
     prev_crop = prev_frame[roi_y1:roi_y2, roi_x1:roi_x2]
     curr_crop = curr_frame[roi_y1:roi_y2, roi_x1:roi_x2]
-    diff = cv2.absdiff(prev_crop, curr_crop)
-    gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-    _, mask = cv2.threshold(gray, threshold, 255, cv2.THRESH_BINARY)
+    prev_gray = cv2.cvtColor(prev_crop, cv2.COLOR_BGR2GRAY)
+    curr_gray = cv2.cvtColor(curr_crop, cv2.COLOR_BGR2GRAY)
+    blur_ksize = normalize_blur_ksize(blur_ksize)
+    if blur_ksize > 0:
+        prev_gray = cv2.GaussianBlur(prev_gray, (blur_ksize, blur_ksize), 0)
+        curr_gray = cv2.GaussianBlur(curr_gray, (blur_ksize, blur_ksize), 0)
+    diff = cv2.absdiff(prev_gray, curr_gray)
+    _, mask = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)
 
     if kernel_size > 1:
         kernel = np.ones((kernel_size, kernel_size), dtype=np.uint8)

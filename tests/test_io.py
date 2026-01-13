@@ -19,4 +19,7 @@ def test_event_to_dict_omits_none_optionals():
     assert "iou" not in data
     assert "age" not in data
     assert "missed" not in data
+    assert "center" not in data
+    assert "side" not in data
+    assert "kind_guess" not in data
     assert "meta" not in data

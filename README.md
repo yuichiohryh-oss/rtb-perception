@@ -20,6 +20,30 @@ Hand UI mis-detections can be reduced by limiting diff to the board ROI:
 python -m rtb_perception.run_tracker --video path/to/video.mp4 --out out_dir --debug --roi-top 0.14 --roi-bottom 0.74
 ```
 
+For compressed videos (e.g. YouTube), use blur and a larger diff step:
+
+```bash
+python -m rtb_perception.run_tracker --video path/to/video.mp4 --out out_dir --debug --roi-top 0.16 --roi-bottom 0.68 --blur 5 --diff-step 2
+```
+
+Parameters:
+- `--diff-threshold`: pixel intensity threshold for diff mask.
+- `--blur`: Gaussian blur kernel size for diff (0 disables; even values are rounded up).
+- `--diff-step`: frame step for diff (1 compares to previous frame).
+- `--kernel-size`: morphology kernel size for opening/closing.
+- `--min-area`: minimum bbox area to keep.
+- `--roi-top`: top ratio of ROI.
+- `--roi-bottom`: bottom ratio of ROI.
+- `--roi-left`: left ratio of ROI.
+- `--roi-right`: right ratio of ROI.
+- `--side-split`: board height ratio for enemy/friendly split.
+- `--kind-window`: frames to accumulate movement for kind_guess.
+- `--kind-move-thresh`: movement threshold for area_spell vs unit.
+
+Examples:
+- `--side-split 0.50` で敵/味方推定
+- `--kind-window 6 --kind-move-thresh 10` で範囲スペル推定
+
 Outputs:
 - `out_dir/events.jsonl`
 - `out_dir/debug/frame_000123.jpg` when `--debug` is set
@@ -43,7 +67,7 @@ Required keys:
 - `source`: always `diff`
 
 Optional keys:
-- `iou`, `age`, `missed`, `meta` (only included when available)
+- `iou`, `age`, `missed`, `center`, `side`, `kind_guess`, `meta` (only included when available)
 
 ## Debug legend
 

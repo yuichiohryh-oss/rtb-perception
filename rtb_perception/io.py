@@ -21,6 +21,12 @@ def event_to_dict(event: Event) -> dict:
         data["age"] = event.age
     if event.missed is not None:
         data["missed"] = event.missed
+    if event.center is not None:
+        data["center"] = list(event.center)
+    if event.side is not None:
+        data["side"] = event.side
+    if event.kind_guess is not None:
+        data["kind_guess"] = event.kind_guess
     if event.meta is not None:
         data["meta"] = event.meta
     return data

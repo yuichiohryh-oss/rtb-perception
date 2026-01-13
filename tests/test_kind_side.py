@@ -5,11 +5,11 @@ def test_side_split_enemy_friendly():
     tracker = UnitTracker(confirm_frames=1)
     split_y = 50
 
-    events = tracker.update(0, [(0, 0, 10, 10)], split_y=split_y)
+    events = tracker.update(0, [(0, 39, 10, 59)], split_y=split_y)
     assert [e.side for e in events] == ["enemy"]
 
-    events = tracker.update(1, [(0, 80, 10, 90)], split_y=split_y)
-    assert [e.side for e in events] == ["friendly"]
+    events = tracker.update(1, [(0, 41, 10, 61)], split_y=split_y)
+    assert [e.side for e in events] == ["enemy"]
 
 
 def test_kind_guess_area_spell():

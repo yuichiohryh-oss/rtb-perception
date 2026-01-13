@@ -23,7 +23,7 @@ python -m rtb_perception.run_tracker --video path/to/video.mp4 --out out_dir --d
 For compressed videos (e.g. YouTube), use blur and a larger diff step:
 
 ```bash
-python -m rtb_perception.run_tracker --video path/to/video.mp4 --out out_dir --debug --roi-top 0.16 --roi-bottom 0.68 --blur 5 --diff-step 2
+python -m rtb_perception.run_tracker --video path/to/video.mp4 --out out_dir --debug --roi-top 0.16 --roi-bottom 0.68 --blur 5 --diff-step 2 --kind-window 4
 ```
 
 Parameters:
@@ -42,7 +42,7 @@ Parameters:
 
 Examples:
 - `--side-split 0.50` で敵/味方推定
-- `--kind-window 6 --kind-move-thresh 10` で範囲スペル推定
+- `--kind-window 4 --kind-move-thresh 10` で範囲スペル推定
 
 Outputs:
 - `out_dir/events.jsonl`
@@ -79,4 +79,5 @@ Optional keys:
 ## Notes
 
 The tracker uses IoU >= 0.3, greedy matching, and spawn confirmation with two consecutive frames.
+kind_guess は spawn 直後に unknown になり得て、update で確定する。
 If you see spurious spawns from the hand UI, tune ROI ratios to focus on the board area.

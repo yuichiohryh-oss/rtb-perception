@@ -29,8 +29,13 @@ def draw_debug_frame(
     events: List[Event],
     candidates: Iterable[Candidate],
     diff_bboxes: Optional[List[Bbox]] = None,
+    roi_rect: Optional[Bbox] = None,
 ) -> np.ndarray:
     canvas = frame.copy()
+
+    if roi_rect:
+        x1, y1, x2, y2 = roi_rect
+        cv2.rectangle(canvas, (x1, y1), (x2, y2), (220, 220, 220), 1)
 
     for cand in candidates:
         x1, y1, x2, y2 = cand.bbox

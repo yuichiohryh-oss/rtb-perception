@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple
 
 import cv2
 
-from .diff_bbox import extract_diff_bboxes
+from .diff_bbox import compute_roi_bounds, extract_diff_bboxes
 from .io import write_events_jsonl
 from .tracker import UnitTracker
 from .visualize import draw_debug_frame
@@ -24,6 +24,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--diff-threshold", type=int, default=25, help="Diff threshold")
     parser.add_argument("--kernel-size", type=int, default=3, help="Morphology kernel size")
     parser.add_argument("--min-area", type=int, default=100, help="Min bbox area")
+    parser.add_argument("--roi-top", type=float, default=0.14, help="ROI top ratio")
+    parser.add_argument("--roi-bottom", type=float, default=0.74, help="ROI bottom ratio")
+    parser.add_argument("--roi-left", type=float, default=0.0, help="ROI left ratio")
+    parser.add_argument("--roi-right", type=float, default=1.0, help="ROI right ratio")
     parser.add_argument("--iou-thresh", type=float, default=0.3, help="IoU threshold")
     parser.add_argument(
         "--confirm-frames", type=int, default=2, help="Frames to confirm spawn"
@@ -78,18 +82,30 @@ def run() -> int:
                 threshold=args.diff_threshold,
                 min_area=args.min_area,
                 kernel_size=args.kernel_size,
+                roi_top=args.roi_top,
+                roi_bottom=args.roi_bottom,
+                roi_left=args.roi_left,
+                roi_right=args.roi_right,
             )
             time_sec = frame_index / fps if fps and fps > 0 else None
             events = tracker.update(frame_index, diff_bboxes, time_sec)
             write_events_jsonl(handle, events)
 
             if args.debug:
+                roi_rect = compute_roi_bounds(
+                    frame.shape,
+                    roi_top=args.roi_top,
+                    roi_bottom=args.roi_bottom,
+                    roi_left=args.roi_left,
+                    roi_right=args.roi_right,
+                )
                 debug_img = draw_debug_frame(
                     frame,
                     tracker.get_tracks(),
                     events,
                     tracker.get_candidates(),
                     diff_bboxes=diff_bboxes,
+                    roi_rect=roi_rect,
                 )
                 debug_path = debug_dir / f"frame_{frame_index:06d}.jpg"
                 cv2.imwrite(str(debug_path), debug_img)

@@ -8,14 +8,56 @@ import numpy as np
 Bbox = Tuple[int, int, int, int]
 
 
+def compute_roi_bounds(
+    frame_shape: Tuple[int, int, int],
+    roi_top: float,
+    roi_bottom: float,
+    roi_left: float,
+    roi_right: float,
+) -> Bbox:
+    height, width = frame_shape[:2]
+    x1 = int(width * roi_left)
+    x2 = int(width * roi_right)
+    y1 = int(height * roi_top)
+    y2 = int(height * roi_bottom)
+    x1, x2 = sorted((x1, x2))
+    y1, y2 = sorted((y1, y2))
+    x1 = max(0, min(width, x1))
+    x2 = max(0, min(width, x2))
+    y1 = max(0, min(height, y1))
+    y2 = max(0, min(height, y2))
+    return x1, y1, x2, y2
+
+
+def apply_roi_offset(bbox: Bbox, roi_x1: int, roi_y1: int) -> Bbox:
+    x1, y1, x2, y2 = bbox
+    return x1 + roi_x1, y1 + roi_y1, x2 + roi_x1, y2 + roi_y1
+
+
 def extract_diff_bboxes(
     prev_frame: np.ndarray,
     curr_frame: np.ndarray,
     threshold: int = 25,
     min_area: int = 100,
     kernel_size: int = 3,
+    roi_top: float = 0.14,
+    roi_bottom: float = 0.74,
+    roi_left: float = 0.0,
+    roi_right: float = 1.0,
 ) -> List[Bbox]:
-    diff = cv2.absdiff(prev_frame, curr_frame)
+    roi_x1, roi_y1, roi_x2, roi_y2 = compute_roi_bounds(
+        prev_frame.shape,
+        roi_top=roi_top,
+        roi_bottom=roi_bottom,
+        roi_left=roi_left,
+        roi_right=roi_right,
+    )
+    if roi_x2 <= roi_x1 or roi_y2 <= roi_y1:
+        return []
+
+    prev_crop = prev_frame[roi_y1:roi_y2, roi_x1:roi_x2]
+    curr_crop = curr_frame[roi_y1:roi_y2, roi_x1:roi_x2]
+    diff = cv2.absdiff(prev_crop, curr_crop)
     gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
     _, mask = cv2.threshold(gray, threshold, 255, cv2.THRESH_BINARY)
 
@@ -30,5 +72,6 @@ def extract_diff_bboxes(
         x, y, w, h = cv2.boundingRect(contour)
         if w * h < min_area:
             continue
-        bboxes.append((int(x), int(y), int(x + w), int(y + h)))
+        bbox = (int(x), int(y), int(x + w), int(y + h))
+        bboxes.append(apply_roi_offset(bbox, roi_x1, roi_y1))
     return bboxes

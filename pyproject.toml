@@ -21,6 +21,9 @@ dev = ["pytest"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.setuptools]
+package-dir = {"" = "."}
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["rtb_perception*"]

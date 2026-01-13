@@ -11,7 +11,7 @@ pip install -e .[dev]
 ## CLI
 
 ```bash
-python -m rtb_perception.run_tracker --video path/to/video.mp4 --out out_dir --debug
+python -m rtb_perception.run_tracker --video path/to/video.mp4 --out out_dir --debug --iou-thresh 0.3 --confirm-frames 2 --max-missed 5 --diff-threshold 25 --kernel-size 3 --min-area 80
 ```
 
 Outputs:
@@ -25,7 +25,7 @@ Each line is one event (UTF-8 JSONL).
 ```json
 {"event":"spawn","frame":12,"t":0.4,"track_id":1,"bbox":[10,20,30,40],"source":"diff","iou":0.78,"age":1,"missed":0}
 {"event":"update","frame":13,"t":0.43,"track_id":1,"bbox":[12,22,32,42],"source":"diff","iou":0.66,"age":2,"missed":0}
-{"event":"disappear","frame":30,"t":1.0,"track_id":1,"bbox":[12,22,32,42],"source":"diff","iou":null,"age":19,"missed":6}
+{"event":"disappear","frame":30,"t":1.0,"track_id":1,"bbox":[12,22,32,42],"source":"diff","age":19,"missed":6}
 ```
 
 Required keys:
@@ -37,7 +37,13 @@ Required keys:
 - `source`: always `diff`
 
 Optional keys:
-- `iou`, `age`, `missed`, `meta`
+- `iou`, `age`, `missed`, `meta` (only included when available)
+
+## Debug legend
+
+- Thick green boxes: active tracks with `id`, `age`, `missed`
+- Thin gray boxes: spawn candidates
+- Thin yellow boxes: diff bboxes
 
 ## Notes
 

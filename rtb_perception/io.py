@@ -14,10 +14,13 @@ def event_to_dict(event: Event) -> dict:
         "track_id": event.track_id,
         "bbox": list(event.bbox),
         "source": event.source,
-        "iou": event.iou,
-        "age": event.age,
-        "missed": event.missed,
     }
+    if event.iou is not None:
+        data["iou"] = event.iou
+    if event.age is not None:
+        data["age"] = event.age
+    if event.missed is not None:
+        data["missed"] = event.missed
     if event.meta is not None:
         data["meta"] = event.meta
     return data

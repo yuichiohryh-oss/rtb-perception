@@ -21,7 +21,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--start", type=int, default=0, help="Start frame index")
     parser.add_argument("--end", type=int, default=None, help="End frame index (exclusive)")
     parser.add_argument("--debug", action="store_true", help="Save debug images")
+    parser.add_argument("--diff-threshold", type=int, default=25, help="Diff threshold")
+    parser.add_argument("--kernel-size", type=int, default=3, help="Morphology kernel size")
     parser.add_argument("--min-area", type=int, default=100, help="Min bbox area")
+    parser.add_argument("--iou-thresh", type=float, default=0.3, help="IoU threshold")
+    parser.add_argument(
+        "--confirm-frames", type=int, default=2, help="Frames to confirm spawn"
+    )
+    parser.add_argument("--max-missed", type=int, default=5, help="Max missed frames")
     return parser.parse_args()
 
 
@@ -42,7 +49,11 @@ def run() -> int:
         cap.set(cv2.CAP_PROP_POS_FRAMES, args.start)
 
     fps = cap.get(cv2.CAP_PROP_FPS)
-    tracker = UnitTracker()
+    tracker = UnitTracker(
+        iou_thresh=args.iou_thresh,
+        confirm_frames=args.confirm_frames,
+        max_missed=args.max_missed,
+    )
     events_path = out_dir / "events.jsonl"
 
     prev_frame = None
@@ -61,7 +72,13 @@ def run() -> int:
                 frame_index += 1
                 continue
 
-            diff_bboxes = extract_diff_bboxes(prev_frame, frame, min_area=args.min_area)
+            diff_bboxes = extract_diff_bboxes(
+                prev_frame,
+                frame,
+                threshold=args.diff_threshold,
+                min_area=args.min_area,
+                kernel_size=args.kernel_size,
+            )
             time_sec = frame_index / fps if fps and fps > 0 else None
             events = tracker.update(frame_index, diff_bboxes, time_sec)
             write_events_jsonl(handle, events)

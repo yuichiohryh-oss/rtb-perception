@@ -36,6 +36,13 @@ Parameters:
 - `--roi-bottom`: bottom ratio of ROI.
 - `--roi-left`: left ratio of ROI.
 - `--roi-right`: right ratio of ROI.
+- `--side-split`: board height ratio for enemy/friendly split.
+- `--kind-window`: frames to accumulate movement for kind_guess.
+- `--kind-move-thresh`: movement threshold for area_spell vs unit.
+
+Examples:
+- `--side-split 0.50` で敵/味方推定
+- `--kind-window 6 --kind-move-thresh 10` で範囲スペル推定
 
 Outputs:
 - `out_dir/events.jsonl`
@@ -60,7 +67,7 @@ Required keys:
 - `source`: always `diff`
 
 Optional keys:
-- `iou`, `age`, `missed`, `meta` (only included when available)
+- `iou`, `age`, `missed`, `center`, `side`, `kind_guess`, `meta` (only included when available)
 
 ## Debug legend
 

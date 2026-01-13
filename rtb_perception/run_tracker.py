@@ -38,11 +38,29 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--roi-bottom", type=float, default=0.74, help="ROI bottom ratio")
     parser.add_argument("--roi-left", type=float, default=0.0, help="ROI left ratio")
     parser.add_argument("--roi-right", type=float, default=1.0, help="ROI right ratio")
+    parser.add_argument(
+        "--side-split",
+        type=float,
+        default=0.50,
+        help="Board split ratio to infer enemy/friendly side",
+    )
     parser.add_argument("--iou-thresh", type=float, default=0.3, help="IoU threshold")
     parser.add_argument(
         "--confirm-frames", type=int, default=2, help="Frames to confirm spawn"
     )
     parser.add_argument("--max-missed", type=int, default=5, help="Max missed frames")
+    parser.add_argument(
+        "--kind-window",
+        type=int,
+        default=6,
+        help="Frames to accumulate movement for kind_guess",
+    )
+    parser.add_argument(
+        "--kind-move-thresh",
+        type=float,
+        default=10.0,
+        help="Movement threshold to infer area_spell vs unit",
+    )
     return parser.parse_args()
 
 
@@ -77,6 +95,8 @@ def run() -> int:
         iou_thresh=args.iou_thresh,
         confirm_frames=args.confirm_frames,
         max_missed=args.max_missed,
+        kind_window=args.kind_window,
+        kind_move_thresh=args.kind_move_thresh,
     )
     events_path = out_dir / "events.jsonl"
 
@@ -111,7 +131,8 @@ def run() -> int:
                 roi_right=args.roi_right,
             )
             time_sec = frame_index / fps if fps and fps > 0 else None
-            events = tracker.update(frame_index, diff_bboxes, time_sec)
+            split_y = int(curr_frame.shape[0] * args.side_split)
+            events = tracker.update(frame_index, diff_bboxes, time_sec, split_y=split_y)
             write_events_jsonl(handle, events)
 
             if args.debug:

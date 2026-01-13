@@ -14,6 +14,12 @@ pip install -e .[dev]
 python -m rtb_perception.run_tracker --video path/to/video.mp4 --out out_dir --debug --iou-thresh 0.3 --confirm-frames 2 --max-missed 5 --diff-threshold 25 --kernel-size 3 --min-area 80
 ```
 
+Hand UI mis-detections can be reduced by limiting diff to the board ROI:
+
+```bash
+python -m rtb_perception.run_tracker --video path/to/video.mp4 --out out_dir --debug --roi-top 0.14 --roi-bottom 0.74
+```
+
 Outputs:
 - `out_dir/events.jsonl`
 - `out_dir/debug/frame_000123.jpg` when `--debug` is set
@@ -44,7 +50,9 @@ Optional keys:
 - Thick green boxes: active tracks with `id`, `age`, `missed`
 - Thin gray boxes: spawn candidates
 - Thin yellow boxes: diff bboxes
+- Thin light gray box: ROI used for diff
 
 ## Notes
 
 The tracker uses IoU >= 0.3, greedy matching, and spawn confirmation with two consecutive frames.
+If you see spurious spawns from the hand UI, tune ROI ratios to focus on the board area.

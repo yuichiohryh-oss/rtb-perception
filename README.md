@@ -39,10 +39,11 @@ Parameters:
 - `--side-split`: board height ratio for enemy/friendly split.
 - `--kind-window`: frames to accumulate movement for kind_guess.
 - `--kind-move-thresh`: movement threshold for area_spell vs unit.
+- `--effect-min-age`: minimum track age for area_spell vs impact_effect.
 
 Examples:
-- `--side-split 0.50` で敵/味方推定
-- `--kind-window 4 --kind-move-thresh 10` で範囲スペル推定
+- `--side-split 0.50` splits enemy/friendly at mid-board.
+- `--kind-window 4 --kind-move-thresh 10 --effect-min-age 10` tunes kind_guess thresholds.
 
 Outputs:
 - `out_dir/events.jsonl`
@@ -68,6 +69,7 @@ Required keys:
 
 Optional keys:
 - `iou`, `age`, `missed`, `center`, `side`, `kind_guess`, `meta` (only included when available)
+- `kind_guess` values: `unit` | `area_spell` | `impact_effect` | `unknown`
 
 ## Debug legend
 
@@ -79,5 +81,5 @@ Optional keys:
 ## Notes
 
 The tracker uses IoU >= 0.3, greedy matching, and spawn confirmation with two consecutive frames.
-kind_guess は spawn 直後に unknown になり得て、update で確定する。
+kind_guess starts as unknown until kind_window frames, then resolves based on movement and age.
 If you see spurious spawns from the hand UI, tune ROI ratios to focus on the board area.

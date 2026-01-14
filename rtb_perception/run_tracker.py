@@ -61,6 +61,12 @@ def parse_args() -> argparse.Namespace:
         default=10.0,
         help="Movement threshold to infer area_spell vs unit",
     )
+    parser.add_argument(
+        "--effect-min-age",
+        type=int,
+        default=10,
+        help="Min track age for area_spell vs impact_effect",
+    )
     return parser.parse_args()
 
 
@@ -97,6 +103,7 @@ def run() -> int:
         max_missed=args.max_missed,
         kind_window=args.kind_window,
         kind_move_thresh=args.kind_move_thresh,
+        effect_min_age=args.effect_min_age,
     )
     events_path = out_dir / "events.jsonl"
 

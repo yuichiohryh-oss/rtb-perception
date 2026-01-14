@@ -13,7 +13,12 @@ def test_side_split_enemy_friendly():
 
 
 def test_kind_guess_area_spell():
-    tracker = UnitTracker(confirm_frames=1, kind_window=3, kind_move_thresh=2.0)
+    tracker = UnitTracker(
+        confirm_frames=1,
+        kind_window=3,
+        kind_move_thresh=2.0,
+        effect_min_age=3,
+    )
     bboxes = [(0, 0, 10, 10), (0, 0, 10, 10), (0, 0, 10, 10)]
 
     tracker.update(0, [bboxes[0]])
@@ -23,8 +28,29 @@ def test_kind_guess_area_spell():
     assert [e.kind_guess for e in events] == ["area_spell"]
 
 
+def test_kind_guess_impact_effect():
+    tracker = UnitTracker(
+        confirm_frames=1,
+        kind_window=3,
+        kind_move_thresh=2.0,
+        effect_min_age=5,
+    )
+    bboxes = [(0, 0, 10, 10), (0, 0, 10, 10), (0, 0, 10, 10)]
+
+    tracker.update(0, [bboxes[0]])
+    tracker.update(1, [bboxes[1]])
+    events = tracker.update(2, [bboxes[2]])
+
+    assert [e.kind_guess for e in events] == ["impact_effect"]
+
+
 def test_kind_guess_unit():
-    tracker = UnitTracker(confirm_frames=1, kind_window=3, kind_move_thresh=2.0)
+    tracker = UnitTracker(
+        confirm_frames=1,
+        kind_window=3,
+        kind_move_thresh=2.0,
+        effect_min_age=5,
+    )
     bboxes = [(0, 0, 10, 10), (0, 5, 10, 15), (0, 10, 10, 20)]
 
     tracker.update(0, [bboxes[0]])

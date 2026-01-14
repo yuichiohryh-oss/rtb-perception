@@ -52,12 +52,14 @@ class UnitTracker:
         max_missed: int = 5,
         kind_window: int = 6,
         kind_move_thresh: float = 10.0,
+        effect_min_age: int = 10,
     ) -> None:
         self.iou_thresh = iou_thresh
         self.confirm_frames = confirm_frames
         self.max_missed = max_missed
         self.kind_window = max(1, kind_window)
         self.kind_move_thresh = kind_move_thresh
+        self.effect_min_age = max(1, effect_min_age)
         self._next_id = 1
         self.tracks: Dict[int, Track] = {}
         self._candidates: List[Candidate] = []
@@ -89,18 +91,22 @@ class UnitTracker:
             return None
         return "enemy" if center[1] < split_y else "friendly"
 
+    def _infer_kind_guess(self, track: Track) -> str:
+        if track.age < self.kind_window:
+            return "unknown"
+        if track.dist_sum > self.kind_move_thresh:
+            return "unit"
+        if track.age >= self.effect_min_age:
+            return "area_spell"
+        return "impact_effect"
+
     def _update_track_kind(self, track: Track, center: Tuple[float, float]) -> None:
         if track.last_center is not None and track.age <= self.kind_window:
             dx = center[0] - track.last_center[0]
             dy = center[1] - track.last_center[1]
             track.dist_sum += math.hypot(dx, dy)
         track.last_center = center
-        if track.age >= self.kind_window:
-            track.kind_guess = (
-                "area_spell" if track.dist_sum <= self.kind_move_thresh else "unit"
-            )
-        else:
-            track.kind_guess = "unknown"
+        track.kind_guess = self._infer_kind_guess(track)
 
     def _ensure_track_side(
         self,
@@ -112,12 +118,7 @@ class UnitTracker:
             track.side = self._infer_side(center, split_y)
 
     def _refresh_kind_guess(self, track: Track) -> None:
-        if track.age >= self.kind_window:
-            track.kind_guess = (
-                "area_spell" if track.dist_sum <= self.kind_move_thresh else "unit"
-            )
-        else:
-            track.kind_guess = "unknown"
+        track.kind_guess = self._infer_kind_guess(track)
 
     def _track_match(self, candidates: List[Bbox]) -> List[Match]:
         track_list = list(self.tracks.values())
